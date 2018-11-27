@@ -45,7 +45,7 @@ class Movies extends Component {
   };
 
   handleFilter = _id => {
-    this.setState({ currentFilter: _id });
+    this.setState({ currentFilter: _id, currentPage: 1 });
   };
 
   render() {
@@ -57,13 +57,20 @@ class Movies extends Component {
       currentPage
     } = this.state;
 
+    let filteredMovies = allMovies;
     let movies = paginate(allMovies, currentPage, pageSize);
 
     if (currentFilter !== "all") {
-      movies = movies.filter(m => m.genre._id === currentFilter);
+      filteredMovies = allMovies.filter(m => m.genre._id === currentFilter);
+
+      movies = paginate(
+        filteredMovies,
+        currentPage,
+        pageSize
+      );
     }
 
-    if(allMovies.length === 0)
+    if (allMovies.length === 0)
       return <h5 className="m-2">No Movies Available</h5>;
 
     return (
@@ -117,7 +124,7 @@ class Movies extends Component {
               </tbody>
             </table>
             <Pagination
-              items={allMovies.length}
+              items={filteredMovies.length}
               pageSize={pageSize}
               onPageChange={this.handlePageChange}
               currentPage={currentPage}
