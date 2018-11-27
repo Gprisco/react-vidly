@@ -7,6 +7,7 @@ class Genres extends Component {
     return (
       <ul className="list-group">
         <li
+          style={{ cursor: "pointer" }}
           className={
             currentFilter === "all"
               ? "list-group-item active"
@@ -18,6 +19,7 @@ class Genres extends Component {
         </li>
         {genres.map(g => (
           <li
+            style={{ cursor: "pointer" }}
             onClick={() => onFilter(g._id)}
             key={g._id}
             className={

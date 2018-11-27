@@ -8,12 +8,19 @@ import { paginate } from "../utils/paginate";
 
 class Movies extends Component {
   state = {
-    movies: getMovies(),
-    genres: getGenres(),
+    movies: [],
+    genres: [],
     pageSize: 4,
     currentPage: 1,
     currentFilter: "all"
   };
+
+  componentDidMount() {
+    this.setState({
+      movies: getMovies(),
+      genres: getGenres()
+    });
+  }
 
   handleLike = id => {
     let movies = this.state.movies;
@@ -56,10 +63,11 @@ class Movies extends Component {
       movies = movies.filter(m => m.genre._id === currentFilter);
     }
 
+    if(allMovies.length === 0)
+      return <h5 className="m-2">No Movies Available</h5>;
+
     return (
       <div className="container-fluid">
-        {movies.length === 0 && <h5 className="m-2">No Movies Available</h5>}
-
         <div className="row m-4">
           <div className="col-2">
             <Genres
