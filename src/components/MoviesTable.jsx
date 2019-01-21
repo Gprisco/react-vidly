@@ -37,12 +37,14 @@ class MoviesTable extends Component {
     const { movies, onSort, sortColumn } = this.props;
 
     return (
-      <Table
-        columns={this.columns}
-        data={movies}
-        onSort={onSort}
-        sortColumn={sortColumn}
-      />
+      <React.Fragment>
+        <Table
+          columns={this.columns}
+          data={movies}
+          onSort={onSort}
+          sortColumn={sortColumn}
+        />
+      </React.Fragment>
     );
   }
 }
