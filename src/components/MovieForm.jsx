@@ -1,23 +1,30 @@
 import React from "react";
+import { toast } from "react-toastify";
 import Joi from "joi-browser";
+import { getMovies, saveMovie } from "../services/movieService";
+import { getGenres } from "../services/genreService";
 import Form from "./common/Form";
 
 class MovieForm extends Form {
   state = {
     data: {
-      _id: new Date().toDateString(),
+      _id: "new",
       title: "",
       genreId: "",
       stock: 0,
       rate: ""
     },
+    movies: [],
+    genres: [],
     errors: {}
   };
 
   schema = {
-    _id: Joi.string(),
+    _id: Joi.string().required(),
     title: Joi.string()
       .required()
+      .min(5)
+      .max(50)
       .label("Title"),
     genreId: Joi.string()
       .required()
@@ -34,8 +41,9 @@ class MovieForm extends Form {
       .label("Daily Rental Rate")
   };
 
-  componentDidMount() {
-    const { movies } = this.props;
+  async componentDidMount() {
+    const { data: movies } = await getMovies();
+    const { data: genres } = await getGenres();
     const { id } = this.props.match.params;
 
     let movie = movies.find(m => m._id === id);
@@ -52,24 +60,36 @@ class MovieForm extends Form {
           genreId: genreId,
           stock: movie.numberInStock || "",
           rate: movie.dailyRentalRate || ""
-        }
+        },
+        movies,
+        genres
       });
     } else {
       this.props.history.replace("/not-found");
     }
   }
 
-  doSubmit = e => {
+  doSubmit = async e => {
     //Server Call...
-    console.log("Submitted");
 
-    this.props.onSave(e);
+    const { _id, title, genreId, stock, rate } = e.currentTarget;
+    const movie = {};
 
-    this.props.history.replace("/movies");
+    movie.title = title.value;
+    movie.genreId = genreId.value;
+    movie.dailyRentalRate = rate.value;
+    movie.numberInStock = stock.value;
+
+    try {
+      await saveMovie(movie, _id.value);
+      this.props.history.replace("/movies");
+    } catch (ex) {
+      toast.error("An error occurred");
+    }
   };
 
   render() {
-    const { genres } = this.props;
+    const { genres } = this.state;
     const { _id, genreId } = this.state.data;
 
     return (

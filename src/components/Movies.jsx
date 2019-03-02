@@ -1,13 +1,13 @@
 import React, { Component } from "react";
-import { Route, Link } from "react-router-dom";
-import { getMovies } from "../services/fakeMovieService";
-import { getGenres } from "../services/fakeGenreService";
+import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import { getMovies, deleteMovie, saveMovie } from "../services/movieService";
+import { getGenres } from "../services/genreService";
 import Pagination from "./common/Pagination";
 import Search from "./common/Search";
 import Genres from "./Genres";
 import { paginate } from "../utils/paginate";
 import MoviesTable from "./MoviesTable";
-import MovieForm from "./MovieForm";
 import _ from "lodash";
 
 class Movies extends Component {
@@ -21,10 +21,13 @@ class Movies extends Component {
     sortColumn: { path: "title", order: "asc" }
   };
 
-  componentDidMount() {
+  async componentDidMount() {
+    const { data: genres } = await getGenres();
+    const { data: movies } = await getMovies();
+
     this.setState({
-      movies: getMovies(),
-      genres: getGenres()
+      movies,
+      genres
     });
   }
 
@@ -36,12 +39,15 @@ class Movies extends Component {
     this.setState({ movies });
   };
 
-  handleDelete = _id => {
-    const { movies } = this.state;
-
-    let movieInDb = movies.find(m => m._id === _id);
-    movies.splice(movies.indexOf(movieInDb), 1);
-    this.setState({ movies });
+  handleDelete = async _id => {
+    try {
+      const { data: deletedMovie } = await deleteMovie(_id);
+      const movies = this.state.movies.filter(m => m._id !== deletedMovie._id);
+      this.setState({ movies });
+      toast.success("Movie Deleted!");
+    } catch (ex) {
+      toast.error("An error occurred");
+    }
   };
 
   handlePageChange = page => {
@@ -70,40 +76,26 @@ class Movies extends Component {
   };
 
   handleSave = e => {
-    const { title, genreId, stock, rate } = e.currentTarget;
-    const { _id } = e.currentTarget;
-    const { movies, genres } = this.state;
-
-    let foundMovie = false;
-
-    const movie = {};
+    const { _id, title, genreId, stock, rate } = e.currentTarget;
+    const { genres } = this.state;
     const genre = genres.find(g => g._id === genreId.value);
 
-    movies.forEach(m => {
-      if (m._id === _id.value) {
-        m._id = _id.value;
-        m.title = title.value;
-        m.genre = genre;
-        m.dailyRentalRate = rate.value;
-        m.numberInStock = stock.value;
-        m.liked = false;
+    const movie = {};
 
-        foundMovie = true;
-      }
-    });
+    movie._id = _id.value;
+    movie.title = title.value;
+    movie.genre = genre;
+    movie.dailyRentalRate = rate.value;
+    movie.numberInStock = stock.value;
+    movie.liked = false;
 
-    if (!foundMovie) {
-      movie._id = _id.value;
-      movie.title = title.value;
-      movie.genre = genre;
-      movie.dailyRentalRate = rate.value;
-      movie.numberInStock = stock.value;
-      movie.liked = false;
+    saveMovie(movie);
 
-      movies.push(movie);
-    }
+    const { data: movies } = getMovies();
 
     this.setState({ movies });
+
+    this.props.done("Movie Saved");
   };
 
   getFilteredMovies = () => {
@@ -157,6 +149,8 @@ class Movies extends Component {
       currentSearch
     } = this.state;
 
+    const { user } = this.props;
+
     const { totalCount, data: movies } = this.getFilteredMovies();
 
     return (
@@ -169,9 +163,11 @@ class Movies extends Component {
           />
         </div>
         <div className="col">
-          <Link to="/movies/new" className="btn btn-primary mb-2">
-            New Movie
-          </Link>
+          {user && (
+            <Link to="/movies/new" className="btn btn-primary mb-2">
+              New Movie
+            </Link>
+          )}
           <h5 className="m-2">Showing {totalCount} Movies</h5>
           <Search value={currentSearch} onSearch={this.handleSearch} />
           <MoviesTable
@@ -198,22 +194,7 @@ class Movies extends Component {
     if (allMovies.length === 0)
       return <h5 className="m-2">No Movies Available</h5>;
 
-    return (
-      <div className="container-fluid">
-        <Route
-          path="/movies/:id"
-          render={props => (
-            <MovieForm
-              {...props}
-              genres={this.state.genres}
-              movies={this.state.movies}
-              onSave={this.handleSave}
-            />
-          )}
-        />
-        <Route path="/movies" exact render={this.renderPage} />
-      </div>
-    );
+    return <div className="container-fluid">{this.renderPage()}</div>;
   }
 }
 
