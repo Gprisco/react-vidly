@@ -17,7 +17,7 @@ class Form extends Component {
     const errors = {};
     error.details.map(item => (errors[item.path[0]] = item.message));
 
-    return errors;
+    return errors !== {} ? errors : undefined;
   };
 
   validateProperty = ({ name, value }) => {
@@ -31,7 +31,7 @@ class Form extends Component {
     e.preventDefault();
 
     const errors = this.validate();
-    console.log(errors);
+    //console.log(errors);
     this.setState({ errors: errors || {} });
     if (errors) return; //if there are errors, we don't want to call the server, return immediately
 
@@ -51,8 +51,12 @@ class Form extends Component {
     this.setState({ data, errors });
   };
 
-  renderButton = label => {
-    return <button className="btn btn-primary">{label}</button>;
+  renderButton = (label, errors) => {
+    return (
+      <button disabled={errors} className="btn btn-primary">
+        {label}
+      </button>
+    );
   };
 
   renderSelect = (name, label, data, id) => {

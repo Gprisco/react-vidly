@@ -11,7 +11,7 @@ const Search = props => {
           name="search"
           className="form-control"
           placeholder="Search..."
-          value={value}
+          defaultValue={value}
         />
       </div>
     </form>
